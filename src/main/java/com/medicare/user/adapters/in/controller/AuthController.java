@@ -6,6 +6,8 @@ import com.medicare.user.adapters.in.dto.UserDTO;
 import com.medicare.user.adapters.out.UserRepository;
 import com.medicare.user.domain.enums.Role;
 import com.medicare.user.domain.model.User;
+import com.medicare.user.infrastructure.persistence.UserRepositoryImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -35,10 +37,13 @@ public class AuthController {
 
     private UserRepository userRepository;
 
+    private UserRepositoryImpl userRepositoryImpl;
+
     public AuthController(TokenService tokenService) {
         this.tokenService = tokenService;
     }
 
+    @Operation(summary = "Retorna uma mensagem de boas-vindas")
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid AuthenticationDTO data) {
         try {
@@ -51,6 +56,7 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "Retorna uma mensagem de boas-vindas")
     @PostMapping("/register")
     @Transactional
     public ResponseEntity register(@RequestBody @Valid UserDTO data) {
@@ -65,13 +71,14 @@ public class AuthController {
 
         User newUser = new User(data.getName(), data.getEmail(), encryptedPassword, roleConvertido);
 
-        this.userRepository.saveUser(newUser);
+        this.userRepositoryImpl.save(newUser);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("{\"message\": \"Registro realizado com sucesso\"}");
     }
 
+    @Operation(summary = "Retorna uma mensagem de boas-vindas")
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
         System.out.println("logout: "+request);
