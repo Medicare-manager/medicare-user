@@ -18,7 +18,7 @@ spring:
 api:
   security:
     token:
-      secret: ${JWT_SECRET:my-secret-key}
+      secret: ${JWT_SECRET:my-very-strong-secret-key-of-32-characters}
 
 swagger:
   api:
