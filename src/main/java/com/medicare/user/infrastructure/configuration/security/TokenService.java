@@ -38,6 +38,7 @@ public class TokenService {
     }
 
     public String validateToken(String token){
+        System.out.println("Token recebido para validação: " + token);
         try {
             System.out.println("Token recebido para validação: " + token);
 

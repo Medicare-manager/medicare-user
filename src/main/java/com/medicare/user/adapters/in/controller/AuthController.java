@@ -39,8 +39,15 @@ public class AuthController {
 
     private UserRepositoryImpl userRepositoryImpl;
 
-    public AuthController(TokenService tokenService) {
+    public AuthController(TokenService tokenService, UserRepositoryImpl userRepositoryImpl) {
         this.tokenService = tokenService;
+        this.userRepositoryImpl = userRepositoryImpl;
+    }
+
+    @Operation(summary = "Retorna uma mensagem de boas-vindas")
+    @PostMapping("/login2")
+    public String login2() {
+        return "funciona";
     }
 
     @Operation(summary = "Retorna uma mensagem de boas-vindas")
@@ -61,7 +68,7 @@ public class AuthController {
     @Transactional
     public ResponseEntity register(@RequestBody @Valid UserDTO data) {
         Role roleConvertido = Role.fromString(data.getRole());
-        if(this.userRepository.findByEmail(data.getEmail()) != null) {
+        if(this.userRepositoryImpl.findByEmail(data.getEmail()) != null) {
             return ResponseEntity.badRequest()
                     .contentType(MediaType.APPLICATION_JSON)
                     .body("{\"message\":  \"Login ja existe no sistema.\"}");

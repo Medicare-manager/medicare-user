@@ -11,8 +11,8 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Documentação da API")
+                        .title("Documentação da API de login")
                         .version("1.0")
-                        .description("Descrição da API"));
+                        .description("Descrição da API de login"));
     }
 }
