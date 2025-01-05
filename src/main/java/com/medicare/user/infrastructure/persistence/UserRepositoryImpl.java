@@ -1,7 +1,7 @@
 package com.medicare.user.infrastructure.persistence;
 
 import com.medicare.user.adapters.out.UserRepository;
-import com.medicare.user.domain.model.User;
+import com.medicare.user.domain.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Repository;

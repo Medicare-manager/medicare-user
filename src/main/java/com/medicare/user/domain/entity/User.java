@@ -1,4 +1,4 @@
-package com.medicare.user.domain.model;
+package com.medicare.user.domain.entity;
 
 
 import com.medicare.user.domain.enums.Role;

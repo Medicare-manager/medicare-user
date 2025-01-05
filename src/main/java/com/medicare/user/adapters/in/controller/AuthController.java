@@ -4,8 +4,9 @@ import com.medicare.user.adapters.in.dto.AuthenticationDTO;
 import com.medicare.user.adapters.in.dto.LoginResponseDTO;
 import com.medicare.user.adapters.in.dto.UserDTO;
 import com.medicare.user.adapters.out.UserRepository;
+import com.medicare.user.application.Service.RabbitMQProducer;
 import com.medicare.user.domain.enums.Role;
-import com.medicare.user.domain.model.User;
+import com.medicare.user.domain.entity.User;
 import com.medicare.user.infrastructure.persistence.UserRepositoryImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +40,9 @@ public class AuthController {
 
     private UserRepositoryImpl userRepositoryImpl;
 
+    @Autowired
+    private RabbitMQProducer rabbitMQProducer;
+
     public AuthController(TokenService tokenService, UserRepositoryImpl userRepositoryImpl) {
         this.tokenService = tokenService;
         this.userRepositoryImpl = userRepositoryImpl;
@@ -57,6 +61,13 @@ public class AuthController {
             var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());
             var auth = this.authenticationManager.authenticate(usernamePassword);
             var token = tokenService.generateToken((User) auth.getPrincipal());
+            System.out.println("email de login: " + data.login());
+            rabbitMQProducer.sendToEmailQueue(
+                    data.login(),
+                    "Login realizado com sucesso!",
+                    "Olá, você acabou de fazer login no sistema."
+            );
+
             return ResponseEntity.ok(new LoginResponseDTO(token));
         } catch (BadCredentialsException | InternalAuthenticationServiceException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login e/ou senha inválido.");
