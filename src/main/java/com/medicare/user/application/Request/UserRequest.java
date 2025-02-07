@@ -1,4 +1,4 @@
-package com.medicare.user.adapters.in.dto;
+package com.medicare.user.application.Request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDTO {
+public class UserRequest {
     private String name;
     private String email;
     private String password;

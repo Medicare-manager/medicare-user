@@ -1,6 +1,5 @@
 package com.medicare.user.domain.entity;
 
-
 import com.medicare.user.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
