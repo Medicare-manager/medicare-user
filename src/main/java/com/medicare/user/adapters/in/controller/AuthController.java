@@ -2,12 +2,11 @@ package com.medicare.user.adapters.in.controller;
 
 import com.medicare.user.adapters.in.dto.AuthenticationDTO;
 import com.medicare.user.adapters.in.dto.LoginResponseDTO;
-import com.medicare.user.adapters.in.dto.UserDTO;
-import com.medicare.user.adapters.out.UserRepository;
+import com.medicare.user.application.Request.UserRequest;
+import com.medicare.user.application.Response.RegisterResponse;
 import com.medicare.user.application.Service.RabbitMQProducer;
-import com.medicare.user.domain.enums.Role;
+import com.medicare.user.application.Service.UserService;
 import com.medicare.user.domain.entity.User;
-import com.medicare.user.infrastructure.persistence.UserRepositoryImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,13 +15,11 @@ import jakarta.validation.Valid;
 import com.medicare.user.infrastructure.configuration.security.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,22 +34,21 @@ public class AuthController {
     @Autowired
     private TokenService tokenService;
 
-    private UserRepository userRepository;
-
-    private UserRepositoryImpl userRepositoryImpl;
+    private final UserService userService;
 
     @Autowired
     private RabbitMQProducer rabbitMQProducer;
 
-    public AuthController(TokenService tokenService, UserRepositoryImpl userRepositoryImpl) {
+    public AuthController(TokenService tokenService, UserService userService) {
         this.tokenService = tokenService;
-        this.userRepositoryImpl = userRepositoryImpl;
+        this.userService = userService;
     }
 
     @Operation(summary = "Autenticar usuário",
         responses = {
             @ApiResponse(responseCode = "200", description = "Retorna token."),
-            @ApiResponse(responseCode = "401", description = "Falha no login.")
+            @ApiResponse(responseCode = "401", description = "Falha no login."),
+            @ApiResponse(responseCode = "500", description = "Falha interna no servidor"),
     })
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid AuthenticationDTO data) {
@@ -76,28 +72,13 @@ public class AuthController {
     @Operation(summary = "Registrar novo usuário",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Usuário cadastrado no sistema"),
-                    @ApiResponse(responseCode = "401", description = "Falha no cadastro do usuário"),
-                    @ApiResponse(responseCode = "500", description = "Falha interna no servidor"),
+                    @ApiResponse(responseCode = "400", description = "Falha no cadastro do usuário"),
+                    @ApiResponse(responseCode = "500", description = "Falha interna no servidor")
             })
     @PostMapping("/register")
     @Transactional
-    public ResponseEntity register(@RequestBody @Valid UserDTO data) {
-        Role roleConvertido = Role.fromString(data.getRole());
-        if(this.userRepositoryImpl.findByEmail(data.getEmail()) != null) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"message\":  \"Login ja existe no sistema.\"}");
-        }
-
-        String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
-
-        User newUser = new User(data.getName(), data.getEmail(), encryptedPassword, roleConvertido);
-
-        this.userRepositoryImpl.save(newUser);
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{\"message\": \"Registro realizado com sucesso\"}");
+    public ResponseEntity<RegisterResponse> register(@RequestBody @Valid UserRequest data) {
+        return userService.registerUser(data);
     }
 
     @Operation(summary = "Faz logout do sistema.",
