@@ -1,12 +1,12 @@
 package com.medicare.user.adapters.in.controller;
 
-import com.medicare.user.adapters.in.dto.AuthenticationDTO;
-import com.medicare.user.adapters.in.dto.LoginResponseDTO;
+import com.medicare.user.application.Request.AuthenticationRequest;
 import com.medicare.user.application.Request.UserRequest;
+import com.medicare.user.application.Response.LogoutResponse;
 import com.medicare.user.application.Response.RegisterResponse;
 import com.medicare.user.application.Service.RabbitMQProducer;
 import com.medicare.user.application.Service.UserService;
-import com.medicare.user.domain.entity.User;
+import com.medicare.user.domain.records.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,9 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,26 +44,12 @@ public class AuthController {
     @Operation(summary = "Autenticar usuário",
         responses = {
             @ApiResponse(responseCode = "200", description = "Retorna token."),
-            @ApiResponse(responseCode = "401", description = "Falha no login."),
+            @ApiResponse(responseCode = "400", description = "Falha no login."),
             @ApiResponse(responseCode = "500", description = "Falha interna no servidor"),
     })
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody @Valid AuthenticationDTO data) {
-        try {
-            var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());
-            var auth = this.authenticationManager.authenticate(usernamePassword);
-            var token = tokenService.generateToken((User) auth.getPrincipal());
-            System.out.println("email de login: " + data.login());
-            rabbitMQProducer.sendToEmailQueue(
-                    data.login(),
-                    "Login realizado com sucesso!",
-                    "Olá, você acabou de fazer login no sistema."
-            );
-
-            return ResponseEntity.ok(new LoginResponseDTO(token));
-        } catch (BadCredentialsException | InternalAuthenticationServiceException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login e/ou senha inválido.");
-        }
+    public ResponseEntity<?> login(@RequestBody @Valid AuthenticationRequest data) {
+        return userService.login(data);
     }
 
     @Operation(summary = "Registrar novo usuário",
@@ -88,14 +71,48 @@ public class AuthController {
         @ApiResponse(responseCode = "500", description = "Falha interna no servidor"),
     })
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-        System.out.println("logout: "+request);
-        // Obtenha o token do cabeçalho da autorização
-        String token = extractTokenFromHeader(request);
-        // Adicione o token à lista negra para invalidá-lo
-        tokenService.addToBlacklist(token);
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            // Obtenha o token do cabeçalho da autorização
+            String token = extractTokenFromHeader(request);
 
-        return ResponseEntity.ok("Logout successful");
+            // Verifica se o token é válido
+            if (token == null || tokenService.isTokenBlacklisted(token)) {
+                LogoutResponse errorResponse = new LogoutResponse(
+                        "401",
+                        "Falha ao sair do sistema",
+                        "Token inválido ou já invalidado."
+                );
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+            }
+
+            // Adicione o token à lista negra para invalidá-lo
+            tokenService.addToBlacklist(token);
+
+            // Retorna sucesso
+            LogoutResponse successResponse = new LogoutResponse(
+                    "200",
+                    "Saindo do sistema",
+                    "Usuário deslogado com sucesso");
+            return ResponseEntity.ok(successResponse);
+
+        } catch (Exception e) {
+            // Captura exceções genéricas e retorna erro 500
+            LogoutResponse errorResponse = new LogoutResponse(
+                    "500",
+                    "Erro interno no servidor",
+                    "Um erro inesperado aconteceu no servidor: "
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    private String extractTokenFromHeader(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7); // O token JWT começa após "Bearer "
+        }
+        return null;
     }
 
     @Operation(summary = "Rota pública de teste")
@@ -105,13 +122,7 @@ public class AuthController {
     }
 
 
-    private String extractTokenFromHeader(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7); // O token JWT começa após "Bearer "
-        }
-        return null;
-    }
+
 
 
 }

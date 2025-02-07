@@ -1,6 +1,5 @@
 package com.medicare.user.application.Response;
 
-
 import java.util.List;
 
 public class RegisterResponse {
