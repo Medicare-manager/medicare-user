@@ -26,7 +26,7 @@ public class UserService {
     public ResponseEntity<RegisterResponse> registerUser(UserRequest data) {
         try {
             Role roleConvertido = Role.fromString(data.getRole());
-
+            System.out.println("roleConvertido " + roleConvertido);
             if (this.userRepositoryImpl.findByEmail(data.getEmail()) != null) {
                 ResponseDetail errorDetail = new ResponseDetail(
                         "400",
@@ -34,6 +34,7 @@ public class UserService {
                         "Login já existe no sistema."
                 );
                 RegisterResponse errorResponse = new RegisterResponse(Collections.singletonList(errorDetail), true);
+                System.out.println("errorResponse " + errorResponse.getErros());
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
             }
 
