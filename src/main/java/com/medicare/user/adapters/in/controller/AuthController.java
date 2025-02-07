@@ -9,6 +9,7 @@ import com.medicare.user.domain.enums.Role;
 import com.medicare.user.domain.entity.User;
 import com.medicare.user.infrastructure.persistence.UserRepositoryImpl;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -48,13 +49,11 @@ public class AuthController {
         this.userRepositoryImpl = userRepositoryImpl;
     }
 
-    @Operation(summary = "Retorna uma mensagem de boas-vindas")
-    @PostMapping("/login2")
-    public String login2() {
-        return "funciona";
-    }
-
-    @Operation(summary = "Retorna uma mensagem de boas-vindas")
+    @Operation(summary = "Autenticar usuário",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Retorna token."),
+            @ApiResponse(responseCode = "401", description = "Falha no login.")
+    })
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid AuthenticationDTO data) {
         try {
@@ -74,7 +73,12 @@ public class AuthController {
         }
     }
 
-    @Operation(summary = "Retorna uma mensagem de boas-vindas")
+    @Operation(summary = "Registrar novo usuário",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Usuário cadastrado no sistema"),
+                    @ApiResponse(responseCode = "401", description = "Falha no cadastro do usuário"),
+                    @ApiResponse(responseCode = "500", description = "Falha interna no servidor"),
+            })
     @PostMapping("/register")
     @Transactional
     public ResponseEntity register(@RequestBody @Valid UserDTO data) {
@@ -96,7 +100,12 @@ public class AuthController {
                 .body("{\"message\": \"Registro realizado com sucesso\"}");
     }
 
-    @Operation(summary = "Retorna uma mensagem de boas-vindas")
+    @Operation(summary = "Faz logout do sistema.",
+            responses = {
+        @ApiResponse(responseCode = "200", description = "Usuário saiu do sistema"),
+        @ApiResponse(responseCode = "401", description = "Falha ao sair do sistema"),
+        @ApiResponse(responseCode = "500", description = "Falha interna no servidor"),
+    })
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
         System.out.println("logout: "+request);
@@ -107,6 +116,13 @@ public class AuthController {
 
         return ResponseEntity.ok("Logout successful");
     }
+
+    @Operation(summary = "Rota pública de teste")
+    @PostMapping("/login2")
+    public String login2() {
+        return "funciona";
+    }
+
 
     private String extractTokenFromHeader(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
