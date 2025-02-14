@@ -1,32 +1,37 @@
 package com.medicare.user.application.Response;
 
-import java.util.List;
-
 public class RegisterResponse {
-    private List<ResponseDetail> sucess;
-    private List<ResponseDetail> erros;
+    private String codigo;
+    private String mensagem;
+    private String detalhes;
 
-    public RegisterResponse(List<ResponseDetail> sucess) {
-        this.sucess = sucess;
+    public RegisterResponse(String codigo, String mensagem, String detalhes) {
+        this.codigo = codigo;
+        this.mensagem = mensagem;
+        this.detalhes = detalhes;
     }
 
-    public RegisterResponse(List<ResponseDetail> erros, boolean isError) {
-        this.erros = erros;
+    public String getCodigo() {
+        return codigo;
     }
 
-    public List<ResponseDetail> getSucess() {
-        return sucess;
+    public void setCodigo(String codigo) {
+        this.codigo = codigo;
     }
 
-    public void setSucess(List<ResponseDetail> sucess) {
-        this.sucess = sucess;
+    public String getMensagem() {
+        return mensagem;
     }
 
-    public List<ResponseDetail> getErros() {
-        return erros;
+    public void setMensagem(String mensagem) {
+        this.mensagem = mensagem;
     }
 
-    public void setErros(List<ResponseDetail> erros) {
-        this.erros = erros;
+    public String getDetalhes() {
+        return detalhes;
+    }
+
+    public void setDetalhes(String detalhes) {
+        this.detalhes = detalhes;
     }
 }

@@ -4,9 +4,7 @@ import com.medicare.user.application.Request.AuthenticationRequest;
 import com.medicare.user.application.Request.UserRequest;
 import com.medicare.user.application.Response.LogoutResponse;
 import com.medicare.user.application.Response.RegisterResponse;
-import com.medicare.user.application.Service.RabbitMQProducer;
 import com.medicare.user.application.Service.UserService;
-import com.medicare.user.domain.records.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,7 +14,6 @@ import com.medicare.user.infrastructure.configuration.security.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,15 +23,9 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
     private TokenService tokenService;
 
     private final UserService userService;
-
-    @Autowired
-    private RabbitMQProducer rabbitMQProducer;
 
     public AuthController(TokenService tokenService, UserService userService) {
         this.tokenService = tokenService;
@@ -120,9 +111,5 @@ public class AuthController {
     public String login2() {
         return "funciona";
     }
-
-
-
-
 
 }

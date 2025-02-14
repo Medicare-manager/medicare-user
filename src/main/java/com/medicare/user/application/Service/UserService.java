@@ -1,12 +1,10 @@
 package com.medicare.user.application.Service;
 
-import com.medicare.user.application.Response.LoginResponse;
+import com.medicare.user.application.Response.*;
 import com.medicare.user.application.Request.AuthenticationRequest;
 import com.medicare.user.application.Request.UserRequest;
-import com.medicare.user.application.Response.LoginResponses;
-import com.medicare.user.application.Response.RegisterResponse;
-import com.medicare.user.application.Response.ResponseDetail;
 import com.medicare.user.domain.entity.User;
+import com.medicare.user.domain.enums.ErrorHttp;
 import com.medicare.user.domain.enums.Role;
 import com.medicare.user.infrastructure.configuration.security.TokenService;
 import com.medicare.user.infrastructure.persistence.UserRepositoryImpl;
@@ -19,8 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
-
-import java.util.Collections;
 
 @Service
 public class UserService {
@@ -47,7 +43,6 @@ public class UserService {
 
             var token = tokenService.generateToken((User) auth.getPrincipal());
 
-            // Envia mensagem para a fila RabbitMQ
             rabbitMQProducer.sendToEmailQueue(
                     data.login(),
                     "Login realizado com sucesso!",
@@ -59,17 +54,15 @@ public class UserService {
 
         } catch (BadCredentialsException | InternalAuthenticationServiceException e) {
             LoginResponses errorResponse = new LoginResponses(
-                    "400",
+                    ErrorHttp.QUATROCENTOS.getCodeError(),
                     "Login e/ou senha inválido.",
                     "Corrija o login"
             );
-            // Retorna erro 401 em caso de falha na autenticação
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
 
         } catch (Exception e) {
-            // Captura exceções genéricas e retorna erro 500
             LoginResponses errorResponse = new LoginResponses(
-                    "500",
+                    ErrorHttp.QUINHENTOS.getCodeError(),
                     "Erro interno no servidor",
                     "Um erro inesperado aconteceu no servidor: " + e.getMessage()
             );
@@ -81,16 +74,14 @@ public class UserService {
     public ResponseEntity<RegisterResponse> registerUser(UserRequest data) {
         try {
             Role roleConvertido = Role.fromString(data.getRole());
-            System.out.println("roleConvertido " + roleConvertido);
+            
             if (this.userRepositoryImpl.findByEmail(data.getEmail()) != null) {
-                ResponseDetail errorDetail = new ResponseDetail(
-                        "400",
-                        "Falha no cadastro do usuário",
-                        "Login já existe no sistema."
-                );
-                RegisterResponse errorResponse = new RegisterResponse(Collections.singletonList(errorDetail), true);
-                System.out.println("errorResponse " + errorResponse.getErros());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+                RegisterResponse registerResponse = new RegisterResponse(
+                    ErrorHttp.QUATROCENTOS.getCodeError(), 
+                    "Falha no cadastro do usuário", 
+                    "Login já existe no sistema.");
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(registerResponse);
             }
 
             String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
@@ -98,23 +89,18 @@ public class UserService {
             User newUser = new User(data.getName(), data.getEmail(), encryptedPassword, roleConvertido);
 
             this.userRepositoryImpl.save(newUser);
-
-            ResponseDetail successDetail = new ResponseDetail(
-                    "200",
+            
+            RegisterResponse registerResponse = new RegisterResponse(
+                    ErrorHttp.DUZENTOS.getCodeError(),
                     "Usuário cadastrado no sistema",
-                    "Registro realizado com sucesso"
-            );
-            RegisterResponse successResponse = new RegisterResponse(Collections.singletonList(successDetail));
-            return ResponseEntity.ok().body(successResponse);
-
+                    "Registro realizado com sucesso");
+            return ResponseEntity.ok().body(registerResponse);
         } catch (Exception e) {
-            ResponseDetail errorDetail = new ResponseDetail(
-                    "500",
+            RegisterResponse registerResponse = new RegisterResponse(
+                    ErrorHttp.QUINHENTOS.getCodeError(),
                     "Erro interno no servidor",
-                    "Um erro inesperado aconteceu no servidor: " + e.getMessage()
-            );
-            RegisterResponse errorResponse = new RegisterResponse(Collections.singletonList(errorDetail), true);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+                    "Um erro inesperado aconteceu no servidor: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(registerResponse);
         }
     }
 }
