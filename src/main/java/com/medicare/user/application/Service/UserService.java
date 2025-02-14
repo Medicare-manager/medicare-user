@@ -4,7 +4,7 @@ import com.medicare.user.application.Response.*;
 import com.medicare.user.application.Request.AuthenticationRequest;
 import com.medicare.user.application.Request.UserRequest;
 import com.medicare.user.domain.entity.User;
-import com.medicare.user.domain.enums.ErrorHttp;
+import com.medicare.user.domain.enums.CodeMessageHttp;
 import com.medicare.user.domain.enums.Role;
 import com.medicare.user.infrastructure.configuration.security.TokenService;
 import com.medicare.user.infrastructure.persistence.UserRepositoryImpl;
@@ -54,7 +54,7 @@ public class UserService {
 
         } catch (BadCredentialsException | InternalAuthenticationServiceException e) {
             LoginResponses errorResponse = new LoginResponses(
-                    ErrorHttp.QUATROCENTOS.getCodeError(),
+                    CodeMessageHttp.QUATROCENTOS.getCodeError(),
                     "Login e/ou senha inválido.",
                     "Corrija o login"
             );
@@ -62,7 +62,7 @@ public class UserService {
 
         } catch (Exception e) {
             LoginResponses errorResponse = new LoginResponses(
-                    ErrorHttp.QUINHENTOS.getCodeError(),
+                    CodeMessageHttp.QUINHENTOS.getCodeError(),
                     "Erro interno no servidor",
                     "Um erro inesperado aconteceu no servidor: " + e.getMessage()
             );
@@ -77,7 +77,7 @@ public class UserService {
             
             if (this.userRepositoryImpl.findByEmail(data.getEmail()) != null) {
                 RegisterResponse registerResponse = new RegisterResponse(
-                    ErrorHttp.QUATROCENTOS.getCodeError(), 
+                    CodeMessageHttp.QUATROCENTOS.getCodeError(),
                     "Falha no cadastro do usuário", 
                     "Login já existe no sistema.");
 
@@ -91,13 +91,13 @@ public class UserService {
             this.userRepositoryImpl.save(newUser);
             
             RegisterResponse registerResponse = new RegisterResponse(
-                    ErrorHttp.DUZENTOS.getCodeError(),
+                    CodeMessageHttp.DUZENTOS.getCodeError(),
                     "Usuário cadastrado no sistema",
                     "Registro realizado com sucesso");
             return ResponseEntity.ok().body(registerResponse);
         } catch (Exception e) {
             RegisterResponse registerResponse = new RegisterResponse(
-                    ErrorHttp.QUINHENTOS.getCodeError(),
+                    CodeMessageHttp.QUINHENTOS.getCodeError(),
                     "Erro interno no servidor",
                     "Um erro inesperado aconteceu no servidor: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(registerResponse);
